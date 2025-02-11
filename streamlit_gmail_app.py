@@ -16,7 +16,7 @@ def authenticate_gmail():
         creds = Credentials.from_authorized_user_file("token.json", SCOPES)
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-        creds = flow.run_console(port=0)
+        creds = flow.run_console()
         with open("token.json", "w") as token:
             token.write(creds.to_json())
     return creds
