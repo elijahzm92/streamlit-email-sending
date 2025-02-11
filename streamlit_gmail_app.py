@@ -1,18 +1,53 @@
 import streamlit as st
-import pandas as pd
-import base64
+import json
+import requests
+from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+import base64
 from email.mime.text import MIMEText
-import json
+from urllib.parse import urlencode
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
 # Load credentials from Streamlit secrets
 def authenticate_gmail():
-    creds_dict = json.loads(st.secrets["google_credentials"])  # Load credentials from secrets
-    creds = Credentials.from_authorized_user_info(creds_dict, SCOPES)
-    return creds
+    creds_dict = {
+        "client_id": st.secrets["google_auth"]["client_id"],
+        "client_secret": st.secrets["google_auth"]["client_secret"],
+        "auth_uri": st.secrets["google_auth"]["auth_uri"],
+        "token_uri": st.secrets["google_auth"]["token_uri"],
+        "redirect_uris": [st.secrets["google_auth"]["redirect_uri"]]
+    }
+
+    flow = Flow.from_client_config({"web": creds_dict}, scopes=SCOPES)
+    flow.redirect_uri = creds_dict["redirect_uris"][0]
+
+    auth_url, state = flow.authorization_url(prompt="consent", access_type="offline")
+    
+    st.write(f"[Click here to authenticate]({auth_url})")
+    
+    return state  # Store this state to validate OAuth callback
+
+# Function to handle OAuth callback
+def handle_callback():
+    query_params = st.experimental_get_query_params()
+    if "code" in query_params:
+        code = query_params["code"][0]
+        creds_dict = {
+            "client_id": st.secrets["google_auth"]["client_id"],
+            "client_secret": st.secrets["google_auth"]["client_secret"],
+            "token_uri": st.secrets["google_auth"]["token_uri"],
+            "redirect_uris": [st.secrets["google_auth"]["redirect_uri"]]
+        }
+        flow = Flow.from_client_config({"web": creds_dict}, scopes=SCOPES)
+        flow.redirect_uri = creds_dict["redirect_uris"][0]
+
+        token = flow.fetch_token(code=code)
+        creds = Credentials(**token)
+        st.success("Authentication successful!")
+        return creds
+    return None
 
 # Function to create email message
 def create_message(to, subject, body):
@@ -30,23 +65,26 @@ def send_email(service, to, subject, body):
 # Streamlit UI
 st.title("Bulk Email Sender using Gmail API")
 
+# OAuth Authentication
+if st.button("Authenticate with Gmail"):
+    state = authenticate_gmail()
+
+# Handle callback from OAuth redirect
+creds = handle_callback()
+
 uploaded_file = st.file_uploader("Upload an Excel file", type=["xlsx", "xls"])
 subject = st.text_input("Enter Email Subject")
 body = st.text_area("Enter Email Body")
 
-if uploaded_file is not None:
+if uploaded_file is not None and creds:
     df = pd.read_excel(uploaded_file)
     st.write("Preview of Uploaded File:", df.head())
 
     if st.button("Send Emails"):
-        creds = authenticate_gmail()
-        if creds:
-            service = build("gmail", "v1", credentials=creds)
-            for _, row in df.iterrows():
-                company = row["Company"]
-                email = row["Email"]
-                personalized_body = f"Dear {company},\n\n{body}"
-                send_email(service, email, subject, personalized_body)
-            st.success("Emails sent successfully!")
-        else:
-            st.error("Authentication failed. Please check your credentials.")
+        service = build("gmail", "v1", credentials=creds)
+        for _, row in df.iterrows():
+            company = row["Company"]
+            email = row["Email"]
+            personalized_body = f"Dear {company},\n\n{body}"
+            send_email(service, email, subject, personalized_body)
+        st.success("Emails sent successfully!")
