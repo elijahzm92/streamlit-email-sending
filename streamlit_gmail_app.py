@@ -2,23 +2,16 @@ import streamlit as st
 import pandas as pd
 import base64
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from email.mime.text import MIMEText
-import os
+import json
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.send']
 
-# Function to authenticate and get Gmail service
+# Load credentials from Streamlit secrets
 def authenticate_gmail():
-    creds = None
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-        creds = flow.run_local_server(port=8501, open_browser=False)
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())
+    creds_dict = json.loads(st.secrets["google_credentials"])  # Load credentials from secrets
+    creds = Credentials.from_authorized_user_info(creds_dict, SCOPES)
     return creds
 
 # Function to create email message
@@ -37,10 +30,6 @@ def send_email(service, to, subject, body):
 # Streamlit UI
 st.title("Bulk Email Sender using Gmail API")
 
-if st.button("Authenticate with Gmail"):
-    creds = authenticate_gmail()
-    st.success("Authentication successful!")
-
 uploaded_file = st.file_uploader("Upload an Excel file", type=["xlsx", "xls"])
 subject = st.text_input("Enter Email Subject")
 body = st.text_area("Enter Email Body")
@@ -48,16 +37,16 @@ body = st.text_area("Enter Email Body")
 if uploaded_file is not None:
     df = pd.read_excel(uploaded_file)
     st.write("Preview of Uploaded File:", df.head())
-    
+
     if st.button("Send Emails"):
         creds = authenticate_gmail()
         if creds:
             service = build("gmail", "v1", credentials=creds)
-            for index, row in df.iterrows():
+            for _, row in df.iterrows():
                 company = row["Company"]
                 email = row["Email"]
-                personalized_body = f"Dear {company},\n\n{body}"  # Personalizing email
+                personalized_body = f"Dear {company},\n\n{body}"
                 send_email(service, email, subject, personalized_body)
             st.success("Emails sent successfully!")
         else:
-            st.error("Authentication failed. Please try again.")
+            st.error("Authentication failed. Please check your credentials.")
