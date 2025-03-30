@@ -26,9 +26,9 @@ credentials_json = {"web":{"client_id":"396048701112-2f81logptko4r5hh2n0hr5na11o
 # Function to authenticate Gmail using web-based OAuth flow
 def authenticate_gmail():
     creds = None
-    if os.path.exists("token.pickle"):
-        with open("token.pickle", "rb") as token:
-            creds = pickle.load(token)
+    if "token" in st.session_state:
+        creds = st.session_state["token"]
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -39,15 +39,13 @@ def authenticate_gmail():
             auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
             
             st.write(f"[Click here to authenticate]({auth_url})")
-            
-            auth_code = st.text_input("Enter the authorization code:")
-            
+            auth_code = st.text_input("Enter the authorization code and press Enter:")
+
             if auth_code:
                 try:
                     flow.fetch_token(code=auth_code)
                     creds = flow.credentials
-                    with open("token.pickle", "wb") as token:
-                        pickle.dump(creds, token)
+                    st.session_state["token"] = creds  # Store in session state
                 except Exception as e:
                     st.error(f"Authentication failed: {e}")
                     return None
