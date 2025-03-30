@@ -26,9 +26,11 @@ credentials_json = {"web":{"client_id":"396048701112-2f81logptko4r5hh2n0hr5na11o
 # Function to authenticate Gmail using web-based OAuth flow
 def authenticate_gmail():
     creds = None
+
+    # Check if we have credentials stored in session state
     if "token" in st.session_state:
         creds = st.session_state["token"]
-    
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -36,6 +38,7 @@ def authenticate_gmail():
             flow = InstalledAppFlow.from_client_config(
                 {"web": credentials_json["web"]}, SCOPES
             )
+            
             auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
             
             st.write(f"[Click here to authenticate]({auth_url})")
@@ -51,6 +54,7 @@ def authenticate_gmail():
                     return None
 
     return build("gmail", "v1", credentials=creds)
+
 
 
 
