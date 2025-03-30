@@ -32,16 +32,12 @@ def authenticate_gmail():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_config({"web": credentials_json["web"]}, SCOPES)
-            auth_url, _ = flow.authorization_url(prompt="consent")
-            st.write(f"[Click here to authenticate]({auth_url})")
-            auth_code = st.text_input("Enter the authorization code:")
-            if auth_code:
-                flow.fetch_token(code=auth_code)
-                creds = flow.credentials
-                with open("token.pickle", "wb") as token:
-                    pickle.dump(creds, token)
+            flow = InstalledAppFlow.from_client_config(credentials_json, SCOPES)
+            creds = flow.run_console()  # Uses console-based flow for Streamlit
+            with open("token.pickle", "wb") as token:
+                pickle.dump(creds, token)
     return build("gmail", "v1", credentials=creds)
+
 
 
 # Function to send email
