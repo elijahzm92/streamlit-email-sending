@@ -28,14 +28,16 @@ def authenticate_gmail():
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:
             creds = pickle.load(token)
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_config(credentials_json, SCOPES)
-            creds = flow.run_console()  # Uses console-based flow for Streamlit
+            flow = InstalledAppFlow.from_client_config({"web": credentials_json["web"]}, SCOPES)
+            creds = flow.run_local_server(port=0)  # Start local server for authentication
             with open("token.pickle", "wb") as token:
                 pickle.dump(creds, token)
+    
     return build("gmail", "v1", credentials=creds)
 
 
