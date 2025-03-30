@@ -26,8 +26,8 @@ if "credentials" in st.secrets:
             "client_secret": st.secrets["credentials"]["client_secret"],
             "redirect_uris": st.secrets["credentials"]["redirect_uris"]
         }
-    print(credentials_json)
     }
+    print(credentials_json)
 else:
     st.error("Missing credentials in Streamlit secrets")
     st.stop()
