@@ -19,7 +19,7 @@ import smtplib
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 # Load secrets from Streamlit
-credentials_json = {"web":{"client_id":"396048701112-2f81logptko4r5hh2n0hr5na11obsg7q.apps.googleusercontent.com","project_id":"send-emails-447405","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uris":["https://app-email-sending-ftq3urp6gliaazhuphjn9u.streamlit.app/"]}}
+credentials_json = {"web":{"client_id":"396048701112-2f81logptko4r5hh2n0hr5na11obsg7q.apps.googleusercontent.com","project_id":"send-emails-447405","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uri":"https://app-email-sending-ftq3urp6gliaazhuphjn9u.streamlit.app/"}}
 
 # Function to get authenticated service
 def authenticate_gmail():
