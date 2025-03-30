@@ -21,31 +21,27 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 # Load secrets from Streamlit
 credentials_json = {"web":{"client_id":"396048701112-2f81logptko4r5hh2n0hr5na11obsg7q.apps.googleusercontent.com","project_id":"send-emails-447405","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"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","redirect_uri":"https://app-email-sending-ftq3urp6gliaazhuphjn9u.streamlit.app/"}}
 
+
 # Function to get authenticated service
 def authenticate_gmail():
     creds = None
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:
             creds = pickle.load(token)
-
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_config(
-                {"web": credentials_json["web"]}, SCOPES
-            )
+            flow = InstalledAppFlow.from_client_config({"web": credentials_json["web"]}, SCOPES)
             auth_url, _ = flow.authorization_url(prompt="consent")
             st.write(f"[Click here to authenticate]({auth_url})")
             auth_code = st.text_input("Enter the authorization code:")
-
             if auth_code:
-                creds = flow.fetch_token(code=auth_code)
+                flow.fetch_token(code=auth_code)
+                creds = flow.credentials
                 with open("token.pickle", "wb") as token:
                     pickle.dump(creds, token)
-
     return build("gmail", "v1", credentials=creds)
-
 
 
 # Function to send email
