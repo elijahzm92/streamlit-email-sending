@@ -27,24 +27,25 @@ def authenticate_gmail():
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:
             creds = pickle.load(token)
-    
+
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_config(
-                {"installed": credentials_json["web"]}, SCOPES
+                {"web": credentials_json["web"]}, SCOPES
             )
             auth_url, _ = flow.authorization_url(prompt="consent")
             st.write(f"[Click here to authenticate]({auth_url})")
             auth_code = st.text_input("Enter the authorization code:")
-            
+
             if auth_code:
                 creds = flow.fetch_token(code=auth_code)
                 with open("token.pickle", "wb") as token:
                     pickle.dump(creds, token)
 
     return build("gmail", "v1", credentials=creds)
+
 
 
 # Function to send email
