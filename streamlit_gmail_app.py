@@ -20,8 +20,13 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
 # Load secrets from Streamlit
 if "credentials" in st.secrets:
-    CLIENT_ID = st.secrets["credentials"]["client_id"]
-    CLIENT_SECRET = st.secrets["credentials"]["client_secret"]
+    credentials_json = {
+        "installed": {
+            "client_id": st.secrets["credentials"]["client_id"],
+            "client_secret": st.secrets["credentials"]["client_secret"],
+            "redirect_uris": st.secrets["credentials"]["redirect_uris"]
+        }
+    }
 else:
     st.error("Missing credentials in Streamlit secrets")
     st.stop()
@@ -36,7 +41,7 @@ def authenticate_gmail():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_config({"installed": credentials_json["installed"]}, SCOPES)
+            flow = InstalledAppFlow.from_client_config(credentials_json, SCOPES)
             creds = flow.run_local_server(port=8501)
         with open("token.pickle", "wb") as token:
             pickle.dump(creds, token)
