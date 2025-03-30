@@ -46,7 +46,7 @@ def authenticate_gmail():
             flow = InstalledAppFlow.from_client_config(
                 {"installed": credentials_json["installed"]}, SCOPES
             )
-            creds = flow.run_console()  # ✅ Uses console authentication instead of local server
+            creds = flow.run_console()  # ✅ Change from run_local_server to run_console
 
         with open("token.pickle", "wb") as token:
             pickle.dump(creds, token)
