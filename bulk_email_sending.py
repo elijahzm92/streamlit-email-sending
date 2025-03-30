@@ -4,7 +4,7 @@ import base64
 import os
 import re
 import time
-from google.oauth2 import service_account
+import json
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -18,6 +18,14 @@ import smtplib
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 
+# Load secrets from Streamlit
+if "credentials" in st.secrets:
+    CLIENT_ID = st.secrets["credentials"]["client_id"]
+    CLIENT_SECRET = st.secrets["credentials"]["client_secret"]
+else:
+    st.error("Missing credentials in Streamlit secrets")
+    st.stop()
+
 # Function to get authenticated service
 def authenticate_gmail():
     creds = None
@@ -28,8 +36,8 @@ def authenticate_gmail():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+            flow = InstalledAppFlow.from_client_config({"installed": credentials_json["installed"]}, SCOPES)
+            creds = flow.run_local_server(port=8501)
         with open("token.pickle", "wb") as token:
             pickle.dump(creds, token)
     return build("gmail", "v1", credentials=creds)
